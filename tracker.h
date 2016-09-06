@@ -23,13 +23,18 @@ public:
 	cv::Ptr<cv::xfeatures2d::SURF> detector_;
 	cv::Point2f center_;
 	float radius_;
+	/*debug*/
+	std::vector<cv::Point2f> mfpt_;
+	/*debug*/
 
 	void UpdateDescriptor();
 	bool Match(cv::Mat&);
+	static void addMto(cv::Mat&,cv::Mat&);
 
 	inline void TransformV2P() {/*transform virtual coordinates to physical*/
 		cv::Point2f vo = vzone_.tl();/*virtual origin*/ center_ += vo;
 		for (auto& pt : tCorners_) pt += vo;
+		for (auto& pt : mfpt_) pt += vo;
 	}
 	inline void UpdateVZone() {
 		vzone_ = pzone_;

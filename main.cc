@@ -39,7 +39,8 @@ void onMouse(int event, int x, int y, int, void* userInput) {
 
 int main(int, char* argv[]) {
 	//Param pm;
-	cv::namedWindow("main",CV_GUI_NORMAL);
+	cv::namedWindow("main",CV_GUI_EXPANDED|CV_WINDOW_KEEPRATIO);
+	cv::namedWindow("main2",CV_GUI_EXPANDED|CV_WINDOW_KEEPRATIO);
 //	cv::setMouseCallback("main",onMouse,&pm);
 	cv::VideoCapture vs{argv[1]};
 	SurfTrack tracker{3,400};
@@ -48,8 +49,12 @@ int main(int, char* argv[]) {
 	//tracker.InitTracker(img,cv::Rect{2516,1095,122,54}); //for sample.mp4 4K
 	//tracker.InitTracker(img,cv::Rect{1259,549,60,27}); //for sample2.mp4 2K
 	//tracker.InitTracker(img,cv::Rect{3122,1098,180,80}); //for 65 meter sample6.mp4 4K
-	//tracker.InitTracker(img,cv::Rect{1561,549,90,40}); //for 65 meter sample602.mp4 2K
-	tracker.InitTracker(img,cv::Rect{780,275,45,20}); //for 65 meter sample603.mp4 1K
+	tracker.InitTracker(img,cv::Rect{1561,549,90,40}); //for 65 meter sample602.mp4 2K
+	//tracker.InitTracker(img,cv::Rect{780,275,45,20}); //for 65 meter sample603.mp4 1K
+	for (const auto& pt : tracker.skps_) {
+		cv::Point pxt{cvRound(pt.pt.x),cvRound(pt.pt.y)};
+		cv::circle(tracker.simg_,pxt,0,cv::Scalar(255,0,0),1);
+	}
 	cv::imshow("main",tracker.simg_);
 	cv::waitKey(0);
 	while (vs.read(img)) {
@@ -61,9 +66,14 @@ int main(int, char* argv[]) {
 		if (ret) {
 			cv::Point center; float r=0;
 			tracker.GetCircle(center,r);
-			cv::circle(img,center,r,cv::Scalar(0,255,0),10);
+			//cv::circle(img,center,r,cv::Scalar(0,255,0),10);
+			for (const auto& pt : tracker.mfpt_) {
+				cv::Point pppt {cvRound(pt.x),cvRound(pt.y)};
+				cv::circle(img,pppt,0,cv::Scalar(255,0,0),1);
+			}
 			cv::imshow("main",img);
-			cv::waitKey(100);
+			cv::imshow("main2",tracker.simg_);
+			cv::waitKey(0);
 		} else {std::cerr << "track fail" << std::endl;}
 	}
 	return 0;

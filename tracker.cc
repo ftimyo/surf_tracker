@@ -30,9 +30,20 @@ void fback(Mat& pre, Mat& cur, Mat& flow) {
 	cv::calcOpticalFlowFarneback(old,gray,uflow,0.5,3,15,3,5,1.2,0);
 	uflow.copyTo(flow);
 }
+void SurfTrack::addMto(cv::Mat& x, cv::Mat& y) {
+	for (size_t i=0; i < x.total(); ++i) {
+		auto& px = x.at<uchar>(i);
+		auto& pex = y.at<uchar>(i);
+		if (255 - px < pex) px = 255;
+		else px += pex;
+	}
+}
 
 void SurfTrack::UpdateDescriptor() {
 	detector_->setHessianThreshold(minHessian_);
+	cv::Mat edge;
+	cv::Sobel(simg_,edge,CV_8U,1,1);
+	addMto(simg_,edge);
 	detector_->detectAndCompute(simg_,UMat(),skps_,sdsp_);
 	sCorners_[0] = cvPoint(0,0);
 	sCorners_[1] = cvPoint(simg_.cols,0);
@@ -47,6 +58,9 @@ bool SurfTrack::Match(Mat& img) {
 #endif
 	std::vector<cv::KeyPoint> kps;
 	Mat dsp;
+	Mat edge;
+	cv::Sobel(img,edge,CV_8U,1,1);
+	addMto(img,edge);
 	detector_->detectAndCompute(img,UMat(),kps,dsp);
 	vector<DMatch> matches;
 	matcher_.match(sdsp_,dsp,matches);
@@ -64,6 +78,7 @@ bool SurfTrack::Match(Mat& img) {
 		obj.push_back(skps_[m.queryIdx].pt);
 		scene.push_back(kps[m.trainIdx].pt);
 	}
+	mfpt_ = scene;
   Mat H = findHomography(obj,scene,cv::RANSAC);
 	if (H.empty()) return false;
 #ifndef RELEASE
